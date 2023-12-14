@@ -3,8 +3,8 @@ import pygame
 import numpy as np
 
 MAX_STEPS = 1000
-SCREEN_WIDTH = 96 
-SCREEN_HEIGHT = 96 
+SCREEN_WIDTH = 400 
+SCREEN_HEIGHT = 400 
 
 # Create the pygame screen, used for debugging.
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
