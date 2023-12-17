@@ -50,12 +50,16 @@ while True:
     rotated = np.rot90(observation, k=1, axes=(0,1))
     flipped = np.flip(rotated, axis=0)
     extracted_speed = feature_extraction.extract_true_speed(observation)
+    extracted_abs = feature_extraction.extract_abs(observation)
+
     true_speed = np.sqrt(
             np.square(env.car.hull.linearVelocity[0])
             + np.square(env.car.hull.linearVelocity[1])
         )
-
+    true_abs = tuple(env.car.wheels[i].omega for i in range(4))
     print(f"Extracted speed: {extracted_speed}, Actual: {true_speed}")
+    print(f"Extracted abs: {extracted_abs}, Actual: {true_abs}")
+
     surface = pygame.surfarray.make_surface(flipped)
 
     # Scale the surface to the screen size.
