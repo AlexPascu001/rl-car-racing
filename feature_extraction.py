@@ -35,3 +35,40 @@ def extract_true_speed(image):
     true_speed = (speed_bar[0]*(12/1362)+ np.sum(speed_bar[1:5]) * (20/1893) + speed_bar[5]*(8/606))
 
     return true_speed
+
+# Extract the value of the abs sensors from the image.
+def extract_abs(image):
+    place_left = 7
+    place_right = 11
+
+    s = IMAGE_WIDTH / 40.0
+    h = IMAGE_HEIGHT / 40.0
+
+    # Compute the whole abs bounding box.
+    left_x = math.floor(place_left*s)
+    right_x = math.ceil(place_right*s)
+    down_y = math.floor(IMAGE_HEIGHT- 5 * h)
+    up_y = math.ceil(IMAGE_HEIGHT - h)
+
+    # Extract the whole abs sensor bar.
+    abs_bar = image[down_y:up_y, left_x:right_x, 2]
+
+    # Extract individual bars.
+    bar1 = abs_bar[:, 1]
+    bar2 = abs_bar[:, 3]
+
+    bar3 = abs_bar[:, 7]
+    bar4 = abs_bar[:, 9]
+
+    # These two values were computed through trial-and-error
+    # The maximum possible value on a bar.
+    bar_max = 2283
+    # The maximum possible angular velocity of a wheel
+    wheel_max = 305
+
+    sensor1 = np.sum(bar1) * (wheel_max/bar_max) 
+    sensor2 = np.sum(bar2) * (wheel_max/bar_max)
+    sensor3 = np.sum(bar3) * (wheel_max/bar_max)
+    sensor4 = np.sum(bar4) * (wheel_max/bar_max)
+
+    return (sensor1, sensor2, sensor3, sensor4) 
