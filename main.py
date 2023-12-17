@@ -3,7 +3,7 @@ import pygame
 import numpy as np
 import feature_extraction
 
-MAX_STEPS = 100000000
+MAX_STEPS = 200000
 SCREEN_WIDTH = 400 
 SCREEN_HEIGHT = 400 
 
@@ -49,13 +49,16 @@ while True:
     # https://stackoverflow.com/questions/66241275/pygame-rotates-camera-stream-from-opencv-camera.
     rotated = np.rot90(observation, k=1, axes=(0,1))
     flipped = np.flip(rotated, axis=0)
+
     extracted_speed = feature_extraction.extract_true_speed(observation)
+    extracted_steering = feature_extraction.extract_steering(observation.copy())
     true_speed = np.sqrt(
             np.square(env.car.hull.linearVelocity[0])
             + np.square(env.car.hull.linearVelocity[1])
         )
-
+    true_steering = env.car.wheels[0].joint.angle
     print(f"Extracted speed: {extracted_speed}, Actual: {true_speed}")
+    print(f"Extracted steering: {extracted_steering}, Actual: {true_steering}")
     surface = pygame.surfarray.make_surface(flipped)
 
     # Scale the surface to the screen size.
@@ -68,3 +71,4 @@ while True:
         break
 
 env.close()
+#%%

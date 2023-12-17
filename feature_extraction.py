@@ -1,5 +1,7 @@
 import math
 import numpy as np
+import cv2 as cv
+
 IMAGE_WIDTH = 96
 IMAGE_HEIGHT= 96
 
@@ -35,3 +37,33 @@ def extract_true_speed(image):
     true_speed = (speed_bar[0]*(12/1362)+ np.sum(speed_bar[1:5]) * (20/1893) + speed_bar[5]*(8/606))
 
     return true_speed
+
+def extract_steering(image):
+    place = 20
+
+    s = IMAGE_WIDTH / 40.0
+    h = IMAGE_HEIGHT / 40.0
+
+    left_x = math.floor((place - 4.5) * s)
+    right_x = math.floor((place + 4.5) * s)
+    center_x = math.floor(place * s)
+    line_y = math.floor((2 * IMAGE_HEIGHT - 5 * h) / 2) - 1
+
+    # image = cv.line(image, (left_x, -1000), (left_x, 1000), (0, 0, 255), 1)
+    # image = cv.line(image, (right_x, -1000), (right_x, 1000), (0, 0, 255), 1)
+    # image = cv.line(image, (center_x, -1000), (center_x, 1000), (0, 0, 255), 1)
+    # image = cv.line(image, (-1000, line_y), (1000, line_y), (0, 0, 255), 1)
+    # cv.imwrite(f"auxiliaryImages/{extract_steering.cnt}.jpg", image)
+    extract_steering.cnt += 1
+
+    steering_val_left = np.sum(image[line_y, left_x - 1:center_x, 1])
+    steering_val_right = np.sum(image[line_y, center_x:right_x + 1, 1])
+
+    steering_val_maximum = max(center_x - left_x, right_x - center_x) * 255
+
+    steering_val_left_normalized = steering_val_left * 0.42 / steering_val_maximum
+    steering_val_right_normalized = steering_val_right * 0.42 / steering_val_maximum
+
+    return -steering_val_right_normalized if steering_val_right > steering_val_left else steering_val_left_normalized
+
+extract_steering.cnt = 1
