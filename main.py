@@ -60,7 +60,7 @@ while True:
     flipped = np.flip(rotated, axis=0)
     extracted_speed = feature_extraction.extract_true_speed(observation)
     extracted_abs = feature_extraction.extract_abs(observation)
-    indicator_bar = feature_extraction.extract_indicators(flipped)
+    indicator_bar = feature_extraction.extract_indicators(observation)
 
     true_speed = np.sqrt(
         np.square(env.car.hull.linearVelocity[0])
@@ -81,7 +81,7 @@ while True:
 
     print(f"Delta true speed: {true_speed - extracted_speed:.2f} | Delta true abs: {true_abs[0] - extracted_abs[0]:.2f} | Gyroscope: {current_gyroscope_value:.2f}")
 
-    surface = pygame.surfarray.make_surface(indicator_bar)
+    surface = pygame.surfarray.make_surface(flipped)
 
     # Scale the surface to the screen size.
     surface = pygame.transform.scale(surface, (SCREEN_WIDTH, SCREEN_HEIGHT))

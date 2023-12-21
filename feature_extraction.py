@@ -8,6 +8,9 @@ IMAGE_HEIGHT = 96
 
 # Extract the rectangle that holds all the indicators.
 def extract_indicators(image):
+    rotated = np.rot90(image, k=1, axes=(0, 1))
+    flipped = np.flip(rotated, axis=0)
+    image = flipped
     h = IMAGE_HEIGHT / 40.0
     indicators = image[0:IMAGE_WIDTH, math.ceil(IMAGE_HEIGHT - 5 * h):IMAGE_HEIGHT]
     return indicators
