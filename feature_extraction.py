@@ -6,17 +6,19 @@ IMAGE_WIDTH = 96
 IMAGE_HEIGHT = 96
 
 
-# Extract the rectangle that holds all the indicators.
+# Extract the rectangle that holds all the indicators, except the score.
+# The score is considered noise.
 def extract_indicators(image):
-    rotated = np.rot90(image, k=1, axes=(0, 1))
-    flipped = np.flip(rotated, axis=0)
-    image = flipped
+    s = IMAGE_WIDTH / 40.0
     h = IMAGE_HEIGHT / 40.0
-    indicators = image[0:IMAGE_WIDTH, math.ceil(IMAGE_HEIGHT - 5 * h):IMAGE_HEIGHT]
+
+    low_y = math.floor(IMAGE_HEIGHT - 5 * h)
+    left_x = math.floor(5*s) 
+
+    indicators = image[low_y:IMAGE_HEIGHT, left_x:IMAGE_WIDTH]
     return indicators
 
-
-# Extracts the true speed indicator from the image.
+# Parses the true speed indicator from the image.
 def extract_true_speed(image):
     place = 5
 
