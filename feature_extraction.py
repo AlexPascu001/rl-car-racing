@@ -5,60 +5,44 @@ import cv2
 IMAGE_WIDTH = 96
 IMAGE_HEIGHT = 96
 
-
-# Extract the rectangle that holds all the indicators.
+# Extract the rectangle that holds all the indicators, except the score.
+# The score is considered noise.
 def extract_indicators(image):
-    rotated = np.rot90(image, k=1, axes=(0, 1))
-    flipped = np.flip(rotated, axis=0)
-    image = flipped
-    h = IMAGE_HEIGHT / 40.0
-    indicators = image[0:IMAGE_WIDTH, math.ceil(IMAGE_HEIGHT - 5 * h):IMAGE_HEIGHT]
-    return indicators
-
-
-# Extracts the true speed indicator from the image.
-def extract_true_speed(image):
-    place = 5
-
-    # These ratios are taken from the car_racing.py env.
     s = IMAGE_WIDTH / 40.0
     h = IMAGE_HEIGHT / 40.0
 
-    left_x = math.floor(place * s)
-    right_x = math.ceil((place + 1) * s)
+    low_y = math.floor(IMAGE_HEIGHT - 5 * h)
+    left_x = math.floor(5*s) 
 
-    down_y = math.floor(IMAGE_HEIGHT - 5 * h)
-    up_y = math.ceil(IMAGE_HEIGHT - h)
+    indicators = image[low_y:IMAGE_HEIGHT, left_x:IMAGE_WIDTH]
+    return indicators
 
-    # Extract the true speed bar.
-    speed_bar = image[down_y:up_y, left_x:right_x]
+# Extracts the true speed indicator value from the image.
+def extract_true_speed(image):
+    # Define the range for the white color (true speed indicator)
+    lower_white = np.array([60, 60, 60])
+    upper_white= np.array([255, 255, 255])
 
-    # Sum for each line in the speed bar.
-    speed_bar = np.flip(np.sum(speed_bar, axis=(1, 2)))
+    # Get the image mask.
+    mask = cv2.inRange(image, lower_white, upper_white)
+    isolated_white = cv2.bitwise_and(image, image, mask=mask)
 
-    # Hand-crafted magic numbers chosen to match the actual true speed.
-    true_speed = (speed_bar[0] * (12 / 1362) + np.sum(speed_bar[1:5]) * (20 / 1893) + speed_bar[5] * (8 / 606))
-
-    return true_speed
-
+    # The sum of the pixels when the speed is 100 is 9420.
+    return np.sum(isolated_white) * 100 / 9420
 
 # Extract the value of the abs sensors from the image.
 def extract_abs(image):
-    place_left = 7
-    place_right = 11
+    place_left = 2 
+    place_right = 6 
 
     s = IMAGE_WIDTH / 40.0
-    h = IMAGE_HEIGHT / 40.0
 
     # Compute the whole abs bounding box.
-    left_x = math.floor(place_left * s)
-    right_x = math.ceil(place_right * s)
-    down_y = math.floor(IMAGE_HEIGHT - 5 * h)
-    up_y = math.ceil(IMAGE_HEIGHT - h)
+    left_x = int(place_left * s)
+    right_x = int(place_right * s)
 
     # Extract the whole abs sensor bar.
-    abs_bar = image[down_y:up_y, left_x:right_x, 2]
-
+    abs_bar = image[:,  left_x:right_x, 2]
 
     # Extract individual bars.
     bar1 = abs_bar[:, 1]
@@ -69,7 +53,7 @@ def extract_abs(image):
 
     # These two values were computed through trial-and-error
     # The maximum possible value on a bar.
-    bar_max = 2283
+    bar_max = 1913 
     # The maximum possible angular velocity of a wheel
     wheel_max = 305
 
@@ -101,7 +85,11 @@ def extract_gyroscope(image):
 
     # If no contours are found, return 0 as the length (no gyroscope indicator visible)
     if not contours:
-        return 0
+        return 0 
+
+    # found by trial and error
+    MAX_GYROSCOPE_WIDTH = 22 
+    MAX_GYROSCOPE_VAL = 15 
 
     # Assuming the largest contour is the gyroscope indicator, we find its bounding box
     gyroscope_contour = max(contours, key=cv2.contourArea)
@@ -109,8 +97,8 @@ def extract_gyroscope(image):
     # x and y are the coordinates of the top-left corner of the bounding box
     # w and h are the width and height of the bounding box
 
-    start_height = 72
-    if y < start_height:  # the gyroscope is turning left
-        return -h
+    middle_x = 60 
+    if x < middle_x :  # the gyroscope is turning left
+        return w * MAX_GYROSCOPE_VAL /MAX_GYROSCOPE_WIDTH
     else:  # the gyroscope is turning right
-        return h
+        return -w *MAX_GYROSCOPE_VAL /MAX_GYROSCOPE_WIDTH
