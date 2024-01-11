@@ -32,21 +32,20 @@ def extract_true_speed(image):
 
 
 def extract_steering(image):
-    place = 20
+    place = 15 
 
     s = IMAGE_WIDTH / 40.0
     h = IMAGE_HEIGHT / 40.0
 
     left_x = math.floor((place - 4.2) * s)
-    right_x = math.floor((place + 4.2) * s)
+    right_x = math.ceil((place + 4.2) * s)
     center_x = math.floor(place * s)
-    line_y = math.floor((2 * IMAGE_HEIGHT - 5 * h) / 2) - 1
 
-    green_channel = image[:, :, 1]
+    green_channel = image[:, left_x:right_x, 1].copy()
     green_channel[green_channel > 0] = 255
 
-    steering_val_left = np.sum(image[line_y, left_x - 1:center_x + 1, 1]) / 255
-    steering_val_right = np.sum(image[line_y, center_x - 1:right_x + 1, 1]) / 255
+    steering_val_left = np.sum(green_channel[2]) / 255
+    steering_val_right = np.sum(green_channel[2]) / 255
 
     steering_val_maximum = max(center_x - left_x + 1, right_x - center_x + 1)
 

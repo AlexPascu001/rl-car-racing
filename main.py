@@ -52,7 +52,7 @@ while True:
     extracted_speed = feature_extraction.extract_true_speed(indicator_bar)
     extracted_abs = feature_extraction.extract_abs(indicator_bar)
     extracted_gyroscope = feature_extraction.extract_gyroscope(indicator_bar)
-    extracted_steering = feature_extraction.extract_steering(observation)
+    extracted_steering = feature_extraction.extract_steering(indicator_bar)
 
     true_speed = np.sqrt(
         np.square(env.car.hull.linearVelocity[0])
