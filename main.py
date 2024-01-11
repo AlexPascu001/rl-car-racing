@@ -4,7 +4,7 @@ import numpy as np
 import feature_extraction
 import util
 
-MAX_STEPS = 200000
+MAX_STEPS = 100000000 
 SCREEN_WIDTH = 400 
 SCREEN_HEIGHT = 400 
 
@@ -23,6 +23,9 @@ def register_input():
                 a[1] = +1.0
             if event.key == pygame.K_DOWN:
                 a[2] = +0.8  # set 1.0 for wheels to block to zero rotation
+            if event.key == pygame.K_ESCAPE:
+                env.close()
+                exit()
 
         if event.type == pygame.KEYUP:
             if event.key == pygame.K_LEFT:
@@ -62,9 +65,11 @@ while True:
     print(f"True speed: {true_speed}, extracted speed: {extracted_speed}")
     print(f"True abs:{true_abs}, extracted abs: {extracted_abs}")
     print(f"True gyroscope:{true_gyroscope}, extracted gyroscope: {extracted_gyroscope}")
+    print(f"True steering:{true_steering}, extracted steering: {extracted_steering}")
 
     # Rendering
     surface = pygame.surfarray.make_surface(util.flip_and_rotate(observation))
+    surface = pygame.transform.scale(surface, (SCREEN_WIDTH, SCREEN_HEIGHT))
     screen.blit(surface, (0,0))
     pygame.display.update()
 
