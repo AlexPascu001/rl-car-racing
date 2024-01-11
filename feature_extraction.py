@@ -5,7 +5,6 @@ import cv2
 IMAGE_WIDTH = 96
 IMAGE_HEIGHT = 96
 
-
 # Extract the rectangle that holds all the indicators, except the score.
 # The score is considered noise.
 def extract_indicators(image):
@@ -86,7 +85,11 @@ def extract_gyroscope(image):
 
     # If no contours are found, return 0 as the length (no gyroscope indicator visible)
     if not contours:
-        return 0
+        return 0 
+
+    # found by trial and error
+    MAX_GYROSCOPE_WIDTH = 22 
+    MAX_GYROSCOPE_VAL = 15 
 
     # Assuming the largest contour is the gyroscope indicator, we find its bounding box
     gyroscope_contour = max(contours, key=cv2.contourArea)
@@ -94,8 +97,8 @@ def extract_gyroscope(image):
     # x and y are the coordinates of the top-left corner of the bounding box
     # w and h are the width and height of the bounding box
 
-    start_height = 72
-    if y < start_height:  # the gyroscope is turning left
-        return -h
+    middle_x = 60 
+    if x < middle_x :  # the gyroscope is turning left
+        return w * MAX_GYROSCOPE_VAL /MAX_GYROSCOPE_WIDTH
     else:  # the gyroscope is turning right
-        return h
+        return -w *MAX_GYROSCOPE_VAL /MAX_GYROSCOPE_WIDTH

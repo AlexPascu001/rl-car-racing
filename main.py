@@ -13,7 +13,6 @@ SCREEN_HEIGHT = 400
 # User-controlled input.
 a = np.array([0.0, 0.0, 0.0])
 
-MAX_GYROSCOPE_VAL = 22  # found by trial and error
 
 def register_input():
     global a
@@ -58,15 +57,18 @@ while True:
     indicator_bar = feature_extraction.extract_indicators(observation)
     extracted_speed = feature_extraction.extract_true_speed(indicator_bar)
     extracted_abs = feature_extraction.extract_abs(indicator_bar)
+    extracted_gyroscope = feature_extraction.extract_gyroscope(indicator_bar)
 
     true_speed = np.sqrt(
         np.square(env.car.hull.linearVelocity[0])
         + np.square(env.car.hull.linearVelocity[1])
     )
     true_abs = tuple(env.car.wheels[i].omega for i in range(4))
+    true_gyroscope = env.car.hull.angularVelocity
 
     print(f"True speed: {true_speed}, extracted speed: {extracted_speed}")
     print(f"True abs:{true_abs}, extracted abs: {extracted_abs}")
+    print(f"True gyroscope:{true_gyroscope}, extracted gyroscope: {extracted_gyroscope}")
 
     # Rendering
     surface = pygame.surfarray.make_surface(util.flip_and_rotate(observation))
