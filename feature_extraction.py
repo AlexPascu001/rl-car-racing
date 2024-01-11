@@ -3,7 +3,7 @@ import numpy as np
 import cv2
 
 IMAGE_WIDTH = 96
-IMAGE_HEIGHT= 96
+IMAGE_HEIGHT = 96
 
 # Extract the rectangle that holds all the indicators, except the score.
 # The score is considered noise.
@@ -30,6 +30,7 @@ def extract_true_speed(image):
     # The sum of the pixels when the speed is 100 is 9420.
     return np.sum(isolated_white) * 100 / 9420
 
+
 def extract_steering(image):
     place = 20
 
@@ -41,21 +42,13 @@ def extract_steering(image):
     center_x = math.floor(place * s)
     line_y = math.floor((2 * IMAGE_HEIGHT - 5 * h) / 2) - 1
 
-    # image = cv.line(image, (left_x, -1000), (left_x, 1000), (0, 0, 255), 1)
-    # image = cv.line(image, (right_x, -1000), (right_x, 1000), (0, 0, 255), 1)
-    # image = cv.line(image, (center_x, -1000), (center_x, 1000), (0, 0, 255), 1)
-    # image = cv.line(image, (-1000, line_y), (1000, line_y), (0, 0, 255), 1)
-    # cv.imwrite(f"auxiliaryImages/{extract_steering.cnt}.jpg", image)
-
     green_channel = image[:, :, 1]
     green_channel[green_channel > 0] = 255
 
-    extract_steering.cnt += 1
+    steering_val_left = np.sum(image[line_y, left_x - 1:center_x + 1, 1]) / 255
+    steering_val_right = np.sum(image[line_y, center_x - 1:right_x + 1, 1]) / 255
 
-    steering_val_left = np.sum(image[line_y, left_x - 1:center_x + 1, 1])
-    steering_val_right = np.sum(image[line_y, center_x - 1:right_x + 1, 1])
-
-    steering_val_maximum = max(center_x - left_x + 1, right_x - center_x + 1) * 255
+    steering_val_maximum = max(center_x - left_x + 1, right_x - center_x + 1)
 
     steering_val_left_normalized = steering_val_left * 0.42 / steering_val_maximum
     steering_val_right_normalized = steering_val_right * 0.42 / steering_val_maximum
