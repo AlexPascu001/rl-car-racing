@@ -32,27 +32,36 @@ def extract_true_speed(image):
 
 
 def extract_steering(image):
-    place = 15 
+    image_rgb = image
+    # Define the range for the green color (steering indicator)
+    lower_green= np.array([0, 100, 0])
+    upper_green = np.array([0, 255, 80])
 
-    s = IMAGE_WIDTH / 40.0
-    h = IMAGE_HEIGHT / 40.0
+    # Create a mask that isolates the green area
+    mask = cv2.inRange(image_rgb, lower_green, upper_green)
 
-    left_x = math.floor((place - 4.2) * s)
-    right_x = math.ceil((place + 4.2) * s)
-    center_x = math.floor(place * s)
+    # Find the contours of the isolated green area
+    contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
 
-    green_channel = image[:, left_x:right_x, 1].copy()
-    green_channel[green_channel > 0] = 255
+    # If no contours are found, return 0 as the length (no gyroscope indicator visible)
+    if not contours:
+        return 0 
 
-    steering_val_left = np.sum(green_channel[2]) / 255
-    steering_val_right = np.sum(green_channel[2]) / 255
+    # found by trial and error
+    MAX_STEERING_WIDTH = 10 
+    MAX_STEERING_VAL = 0.42 
 
-    steering_val_maximum = max(center_x - left_x + 1, right_x - center_x + 1)
+    # Assuming the largest contour is the gyroscope indicator, we find its bounding box
+    gyroscope_contour = max(contours, key=cv2.contourArea)
+    x, y, w, h = cv2.boundingRect(gyroscope_contour)
+    # x and y are the coordinates of the top-left corner of the bounding box
+    # w and h are the width and height of the bounding box
 
-    steering_val_left_normalized = steering_val_left * 0.42 / steering_val_maximum
-    steering_val_right_normalized = steering_val_right * 0.42 / steering_val_maximum
-
-    return -steering_val_right_normalized if steering_val_right > steering_val_left else steering_val_left_normalized
+    middle_x = 34
+    if x < middle_x :  # the gyroscope is turning left
+        return w *MAX_STEERING_VAL  / MAX_STEERING_WIDTH 
+    else:
+        return -w *MAX_STEERING_VAL /MAX_STEERING_WIDTH 
 
 # Extract the value of the abs sensors from the image.
 def extract_abs(image):
