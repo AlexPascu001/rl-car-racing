@@ -33,21 +33,17 @@ def extract_true_speed(image):
 
 # Extract the value of the abs sensors from the image.
 def extract_abs(image):
-    place_left = 7
-    place_right = 11
+    place_left = 2 
+    place_right = 6 
 
     s = IMAGE_WIDTH / 40.0
-    h = IMAGE_HEIGHT / 40.0
 
     # Compute the whole abs bounding box.
-    left_x = math.floor(place_left * s)
-    right_x = math.ceil(place_right * s)
-    down_y = math.floor(IMAGE_HEIGHT - 5 * h)
-    up_y = math.ceil(IMAGE_HEIGHT - h)
+    left_x = int(place_left * s)
+    right_x = int(place_right * s)
 
     # Extract the whole abs sensor bar.
-    abs_bar = image[down_y:up_y, left_x:right_x, 2]
-
+    abs_bar = image[:,  left_x:right_x, 2]
 
     # Extract individual bars.
     bar1 = abs_bar[:, 1]
@@ -58,7 +54,7 @@ def extract_abs(image):
 
     # These two values were computed through trial-and-error
     # The maximum possible value on a bar.
-    bar_max = 2283
+    bar_max = 1913 
     # The maximum possible angular velocity of a wheel
     wheel_max = 305
 

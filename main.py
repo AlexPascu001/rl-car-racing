@@ -56,8 +56,17 @@ while True:
     observation, reward, terminated, truncated, info = env.step(a)
 
     indicator_bar = feature_extraction.extract_indicators(observation)
-    true_speed = feature_extraction.extract_true_speed(indicator_bar)
-    print(f"True speed: {true_speed}")
+    extracted_speed = feature_extraction.extract_true_speed(indicator_bar)
+    extracted_abs = feature_extraction.extract_abs(indicator_bar)
+
+    true_speed = np.sqrt(
+        np.square(env.car.hull.linearVelocity[0])
+        + np.square(env.car.hull.linearVelocity[1])
+    )
+    true_abs = tuple(env.car.wheels[i].omega for i in range(4))
+
+    print(f"True speed: {true_speed}, extracted speed: {extracted_speed}")
+    print(f"True abs:{true_abs}, extracted abs: {extracted_abs}")
 
     # Rendering
     surface = pygame.surfarray.make_surface(util.flip_and_rotate(observation))
@@ -68,7 +77,6 @@ while True:
     if terminated or truncated:
         break
 
-    time.sleep(0.01)
 
 env.close()
 
