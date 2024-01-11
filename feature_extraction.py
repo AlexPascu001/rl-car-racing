@@ -1,6 +1,6 @@
 import math
 import numpy as np
-import cv2
+import cv2 as cv
 
 IMAGE_WIDTH = 96
 IMAGE_HEIGHT= 96
