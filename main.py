@@ -4,6 +4,7 @@ import numpy as np
 import feature_extraction
 import cv2 as cv
 import util
+import time
 
 MAX_STEPS = 100000000
 SCREEN_WIDTH = 400
@@ -55,9 +56,11 @@ while True:
     observation, reward, terminated, truncated, info = env.step(a)
 
     indicator_bar = feature_extraction.extract_indicators(observation)
+    true_speed = feature_extraction.extract_true_speed(indicator_bar)
+    print(f"True speed: {true_speed}")
 
     # Rendering
-    surface = pygame.surfarray.make_surface(util.flip_and_rotate(indicator_bar))
+    surface = pygame.surfarray.make_surface(util.flip_and_rotate(observation))
     surface = pygame.transform.scale(surface, (SCREEN_WIDTH, SCREEN_HEIGHT))
     screen.blit(surface, (0, 0))
     pygame.display.update()
@@ -65,6 +68,7 @@ while True:
     if terminated or truncated:
         break
 
+    time.sleep(0.01)
 
 env.close()
 
