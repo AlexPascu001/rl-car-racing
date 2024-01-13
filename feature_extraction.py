@@ -17,6 +17,17 @@ def extract_indicators(image):
     indicators = image[low_y:IMAGE_HEIGHT, left_x:IMAGE_WIDTH]
     return indicators
 
+# Extracts the rectangle that holds only the gameplay, ignoring the
+# indicators
+def extract_gameplay(image):
+    s = IMAGE_WIDTH / 40.0
+    h = IMAGE_HEIGHT / 40.0
+
+    low_y = math.floor(IMAGE_HEIGHT - 5 * h)
+
+    indicators = image[:low_y,: ]
+    return indicators
+
 # Extracts the true speed indicator value from the image.
 def extract_true_speed(image):
     # Define the range for the white color (true speed indicator)
@@ -135,3 +146,38 @@ def extract_gyroscope(image):
         return w * MAX_GYROSCOPE_VAL /MAX_GYROSCOPE_WIDTH
     else:  # the gyroscope is turning right
         return -w *MAX_GYROSCOPE_VAL /MAX_GYROSCOPE_WIDTH
+
+def raycast(image, angle):
+    # grass_color = rgb(102, 230, 102)
+    height , width, _ = image.shape
+
+    lower_green = np.array([80, 200, 90])
+    upper_green = np.array([110, 250, 120])
+
+    mask = cv2.inRange(image, lower_green, upper_green)
+
+    car_center_y = int(3/4*IMAGE_HEIGHT)
+    car_center_x = int(1/2*IMAGE_HEIGHT)
+
+    def inside(x, y):
+        return x>=0 and x < width and y>=0 and y<height
+
+    dir_x = np.sin(angle)
+    dir_y = -np.cos(angle)
+
+    current_x = car_center_x
+    current_y = car_center_y
+
+    while True:
+        posx = round(current_x)
+        posy = round(current_y)
+
+        if not inside(posx, posy):
+            break
+        if mask[posy, posx] != 0:
+            break
+        image[posy][posx] = [255, 0, 0]
+        current_y+=dir_y
+        current_x+=dir_x
+
+    return (current_x-car_center_x) ** 2 + (current_y - car_center_y)**2
