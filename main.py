@@ -2,7 +2,10 @@ import gymnasium as gym
 import pygame
 import numpy as np
 import feature_extraction
+from feature_extraction import raycast
 import util
+import time
+import car_racing
 
 MAX_STEPS = 100000000 
 SCREEN_WIDTH = 400 
@@ -49,10 +52,18 @@ while True:
     observation, reward, terminated, truncated, info = env.step(a)
 
     indicator_bar = feature_extraction.extract_indicators(observation)
+    gameplay = feature_extraction.extract_gameplay(observation)
     extracted_speed = feature_extraction.extract_true_speed(indicator_bar)
     extracted_abs = feature_extraction.extract_abs(indicator_bar)
     extracted_gyroscope = feature_extraction.extract_gyroscope(indicator_bar)
     extracted_steering = feature_extraction.extract_steering(indicator_bar)
+    extracted_raycasts = [
+        raycast(gameplay, 0), 
+        raycast(gameplay, np.pi/2), 
+        raycast(gameplay, -np.pi/2)
+        ]
+
+    print(extracted_raycasts)
 
     true_speed = np.sqrt(
         np.square(env.car.hull.linearVelocity[0])
@@ -68,7 +79,7 @@ while True:
     print(f"True steering:{true_steering}, extracted steering: {extracted_steering}")
 
     # Rendering
-    surface = pygame.surfarray.make_surface(util.flip_and_rotate(observation))
+    surface = pygame.surfarray.make_surface(util.flip_and_rotate(gameplay))
     surface = pygame.transform.scale(surface, (SCREEN_WIDTH, SCREEN_HEIGHT))
     screen.blit(surface, (0,0))
     pygame.display.update()
