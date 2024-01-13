@@ -30,6 +30,39 @@ def extract_true_speed(image):
     # The sum of the pixels when the speed is 100 is 9420.
     return np.sum(isolated_white) * 100 / 9420
 
+
+def extract_steering(image):
+    image_rgb = image
+    # Define the range for the green color (steering indicator)
+    lower_green= np.array([0, 100, 0])
+    upper_green = np.array([0, 255, 80])
+
+    # Create a mask that isolates the green area
+    mask = cv2.inRange(image_rgb, lower_green, upper_green)
+
+    # Find the contours of the isolated green area
+    contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
+    # If no contours are found, return 0 as the length (no gyroscope indicator visible)
+    if not contours:
+        return 0 
+
+    # found by trial and error
+    MAX_STEERING_WIDTH = 10 
+    MAX_STEERING_VAL = 0.42 
+
+    # Assuming the largest contour is the gyroscope indicator, we find its bounding box
+    gyroscope_contour = max(contours, key=cv2.contourArea)
+    x, y, w, h = cv2.boundingRect(gyroscope_contour)
+    # x and y are the coordinates of the top-left corner of the bounding box
+    # w and h are the width and height of the bounding box
+
+    middle_x = 34
+    if x < middle_x :  # the gyroscope is turning left
+        return w *MAX_STEERING_VAL  / MAX_STEERING_WIDTH 
+    else:
+        return -w *MAX_STEERING_VAL /MAX_STEERING_WIDTH 
+
 # Extract the value of the abs sensors from the image.
 def extract_abs(image):
     place_left = 2 
