@@ -4,8 +4,6 @@ import numpy as np
 import feature_extraction
 from feature_extraction import raycast
 import util
-import time
-import car_racing
 
 MAX_STEPS = 100000000 
 SCREEN_WIDTH = 400 
