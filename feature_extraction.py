@@ -181,3 +181,78 @@ def raycast(image, angle):
         current_x+=dir_x
 
     return (current_x-car_center_x) ** 2 + (current_y - car_center_y)**2
+
+# Utility function used to draw lines at a given angle from the car.
+def draw_ray(image, angle):
+    height , width, _ = image.shape
+
+    car_center_y = int(3/4*IMAGE_HEIGHT)
+    car_center_x = int(1/2*IMAGE_HEIGHT)
+
+    dir_x = np.sin(angle)
+    dir_y = -np.cos(angle)
+
+    current_x = car_center_x
+    current_y = car_center_y
+
+    def inside(x, y):
+        return x>=0 and x < width and y>=0 and y<height
+
+    while True:
+        posx = round(current_x)
+        posy = round(current_y)
+
+        if not inside(posx, posy):
+            break
+
+        image[posy][posx] = [255, 0, 0]
+        current_y+=dir_y
+        current_x+=dir_x
+
+
+
+# Extracts the center of mass of the street.
+def extract_street_com(image):
+    height , width, _ = image.shape
+    lower_gray = np.array([100, 100, 100])
+    upper_gray = np.array([110, 110, 110])
+
+    mask = cv2.inRange(image, lower_gray, upper_gray)
+    xpos = []
+    ypos = []
+    for y in range(height):
+        for x in range(width):
+            if mask[y,x]:
+                xpos.append(x)
+                ypos.append(y)
+
+    num_pos = len(xpos)
+    if num_pos > 0:
+        avg_x = int(sum(xpos) / num_pos)
+        avg_y = int(sum(ypos) / num_pos)
+
+        # Draw COM for debugging.
+        image[avg_y-1:avg_y+2, avg_x-1:avg_x+2] = [0,0,0]
+        return (avg_x, avg_y) 
+    return None 
+
+# Extracts the angle in radians to the center of mass of the street.
+def extract_angle_to_street_com(image):
+    street_com = extract_street_com(image)
+    if not street_com:
+        return 0
+    street_com_x, street_com_y = street_com
+
+    car_center_y = int(3/4*IMAGE_HEIGHT)
+    car_center_x = int(1/2*IMAGE_HEIGHT)
+
+    diff_x = street_com_x - car_center_x
+    diff_y = car_center_y - street_com_y 
+
+    vector = diff_y + 1j*diff_x
+
+    angle = np.angle(vector)
+
+    # Draw ray to COM for debugging.
+    draw_ray(image, angle)
+    return angle 
