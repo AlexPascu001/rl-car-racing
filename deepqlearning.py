@@ -8,15 +8,15 @@ import gymnasium as gym
 import feature_extraction
 from feature_extraction import raycast
 
-BATCH_SIZE = 128
+BATCH_SIZE = 512 
 GAMMA = 0.99
 
 EPSILON_START = 1 
 EPSILON_END = 0.01
 EPSILON_DECAY = 0.99
 
-TAU = 0.1
-LEARNING_RATE = 0.1
+TAU = 0.005
+LEARNING_RATE = 0.001
 
 # Speed, Angle to COM, Ray forward, Ray right, Ray left.
 NUM_OBSERVATIONS = 5
@@ -64,7 +64,7 @@ target_net = DQN(NUM_OBSERVATIONS, NUM_ACTIONS)
 target_net.load_state_dict(policy_net.state_dict())
 
 optimizer = torch.optim.AdamW(policy_net.parameters(), lr=LEARNING_RATE, amsgrad=True)
-memory = ReplayMemory(10000)
+memory = ReplayMemory(100000)
 
 # Array of states -> array of actions
 def select_action(state, epsilon):
