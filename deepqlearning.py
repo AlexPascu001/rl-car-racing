@@ -7,6 +7,7 @@ import numpy as np
 import gymnasium as gym
 import feature_extraction
 from feature_extraction import raycast
+import sys
 
 BATCH_SIZE = 512 
 GAMMA = 0.99
@@ -171,7 +172,14 @@ def run_episode(max_steps, epsilon, render=False):
     return cumulative_reward.item()
 
 if __name__ == "__main__":
-    for x in range(1000):
-        epsilon = get_epsilon(x)
-        reward = run_episode(800, epsilon)
-        print(f"Episode: {x}, Epsilon: {epsilon}, Reward: {reward}")
+    if "--train" in sys.argv:
+        for x in range(501):
+            epsilon = get_epsilon(x)
+            reward = run_episode(1000, epsilon)
+            print(f"Episode: {x}, Epsilon: {epsilon}, Reward: {reward}")
+            if x % 20 == 0:
+                torch.save(target_net.state_dict(), "model.torch")
+    else:
+        policy_net.load_state_dict(torch.load("model.torch"))
+        target_net.load_state_dict(policy_net.state_dict())
+        run_episode(10000, 0, True)
