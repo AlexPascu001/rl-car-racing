@@ -256,3 +256,49 @@ def extract_angle_to_street_com(image):
     # Draw ray to COM for debugging.
     draw_ray(image, angle)
     return angle 
+
+# Extracts closest point to street from car
+def extract_closest_point_to_street(image):
+    height , width, _ = image.shape
+    lower_gray = np.array([100, 100, 100])
+    upper_gray = np.array([110, 110, 110])
+
+    mask = cv2.inRange(image, lower_gray, upper_gray)
+
+    car_center_y = int(3/4*IMAGE_HEIGHT)
+    car_center_x = int(1/2*IMAGE_HEIGHT)
+
+    min_dist = 100000
+    min_x = 0
+    min_y = 0
+    for y in range(height):
+        for x in range(width):
+            if mask[y,x]:
+                dist = (x-car_center_x)**2 + (y-car_center_y)**2
+                if dist < min_dist:
+                    min_dist = dist
+                    min_x = x
+                    min_y = y
+
+    # Draw closest point for debugging.
+    image[min_y-1:min_y+2, min_x-1:min_x+2] = [0,0,0]
+    return (min_x, min_y)
+
+# Extracts the angle in radians to the closest point on the street.
+def extract_angle_to_closest_point(image):
+    closest_point = extract_closest_point_to_street(image)
+    closest_point_x, closest_point_y = closest_point
+
+    car_center_y = int(3/4*IMAGE_HEIGHT)
+    car_center_x = int(1/2*IMAGE_HEIGHT)
+
+    diff_x = closest_point_x - car_center_x
+    diff_y = car_center_y - closest_point_y
+
+    vector = diff_y + 1j*diff_x
+
+    angle = np.angle(vector)
+
+    # Draw ray to closest point for debugging.
+    draw_ray(image, angle)
+    return angle
