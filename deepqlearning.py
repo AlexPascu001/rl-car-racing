@@ -1,7 +1,7 @@
 from collections import namedtuple, deque
 import random
 import torch
-from torch import nn, cuda 
+from torch import nn, cuda
 import torch.nn.functional as F
 import numpy as np
 import gymnasium as gym
@@ -9,27 +9,28 @@ import feature_extraction
 from feature_extraction import raycast
 import sys
 
-BATCH_SIZE = 512 
+BATCH_SIZE = 512
 GAMMA = 0.99
 
-EPSILON_START = 1 
+EPSILON_START = 1
 EPSILON_END = 0.01
 EPSILON_DECAY = 0.99
 
 TAU = 0.005
 LEARNING_RATE = 0.001
 
-# Speed, Angle to COM, Ray forward, Ray right, Ray left.
-NUM_OBSERVATIONS = 5
-NUM_ACTIONS = 5 
+# Speed, Gyro, Angle to COM, Ray forward, Ray right, Ray left.
+NUM_OBSERVATIONS = 6
+NUM_ACTIONS = 5
+
 
 def get_epsilon(n_episode):
     epsilon = max(EPSILON_START * (EPSILON_DECAY**n_episode), EPSILON_END)
     return epsilon
 
 
-Transition = namedtuple('Transition',
-                        ('state', 'action', 'next_state', 'reward'))
+Transition = namedtuple("Transition", ("state", "action", "next_state", "reward"))
+
 
 class ReplayMemory(object):
     def __init__(self, capacity):
@@ -60,12 +61,14 @@ class DQN(nn.Module):
         x = F.relu(self.layer2(x))
         return self.layer3(x)
 
+
 policy_net = DQN(NUM_OBSERVATIONS, NUM_ACTIONS)
 target_net = DQN(NUM_OBSERVATIONS, NUM_ACTIONS)
 target_net.load_state_dict(policy_net.state_dict())
 
 optimizer = torch.optim.AdamW(policy_net.parameters(), lr=LEARNING_RATE, amsgrad=True)
 memory = ReplayMemory(100000)
+
 
 # Array of states -> array of actions
 def select_action(state, epsilon):
@@ -81,7 +84,7 @@ def select_action(state, epsilon):
 def optimize_model():
     if len(memory) < BATCH_SIZE:
         return
-    
+
     transitions = memory.sample(BATCH_SIZE)
 
     start_states = [transition.state for transition in transitions]
@@ -103,10 +106,10 @@ def optimize_model():
 
     with torch.no_grad():
         # Compute max_a(Q(se, a)) for the end batch.
-        q = target_net(end_batch).max(1).values 
+        q = target_net(end_batch).max(1).values
 
     # Compute r + GAMMA * max_a(Q(se, a))
-    right = reward_batch + GAMMA * q 
+    right = reward_batch + GAMMA * q
 
     criterion = nn.SmoothL1Loss()
     loss = criterion(left, right.unsqueeze(1))
@@ -118,33 +121,44 @@ def optimize_model():
     torch.nn.utils.clip_grad_value_(policy_net.parameters(), 100)
     optimizer.step()
 
+
 def extract_feature_tensor(observation):
     indicator_bar = feature_extraction.extract_indicators(observation)
     gameplay = feature_extraction.extract_gameplay(observation)
 
-    extracted_speed = feature_extraction.extract_true_speed(indicator_bar)/100
-    extracted_gyroscope = feature_extraction.extract_gyroscope(indicator_bar)
+    extracted_speed = feature_extraction.extract_true_speed(indicator_bar) / 100
+    extracted_gyroscope = feature_extraction.extract_gyroscope(indicator_bar) / 15
     extracted_steering = feature_extraction.extract_steering(indicator_bar)
     extracted_com = feature_extraction.extract_angle_to_street_com(gameplay)
     forward, right, left = [
-        raycast(gameplay, 0)/5329, 
-        raycast(gameplay, np.pi/2)/500, 
-        raycast(gameplay, -np.pi/2)/500
-        ]
-    return torch.tensor([extracted_speed, forward, right, left, extracted_com], dtype=torch.float32).unsqueeze(0)
+        raycast(gameplay, 0) / 5329,
+        raycast(gameplay, np.pi / 2) / 500,
+        raycast(gameplay, -np.pi / 2) / 500,
+    ]
+    return torch.tensor(
+        [extracted_speed, extracted_gyroscope, forward, right, left, extracted_com],
+        dtype=torch.float32,
+    ).unsqueeze(0)
 
 
 def soft_update():
     target_net_state_dict = target_net.state_dict()
     policy_net_state_dict = policy_net.state_dict()
     for key in policy_net_state_dict:
-        target_net_state_dict[key] = policy_net_state_dict[key]*TAU + target_net_state_dict[key]*(1-TAU)
+        target_net_state_dict[key] = policy_net_state_dict[
+            key
+        ] * TAU + target_net_state_dict[key] * (1 - TAU)
     target_net.load_state_dict(target_net_state_dict)
 
 
 def run_episode(max_steps, epsilon, render=False):
     if render:
-        env = gym.make("CarRacing-v2", render_mode="human", max_episode_steps=max_steps, continuous=False)
+        env = gym.make(
+            "CarRacing-v2",
+            render_mode="human",
+            max_episode_steps=max_steps,
+            continuous=False,
+        )
     else:
         env = gym.make("CarRacing-v2", max_episode_steps=max_steps, continuous=False)
 
@@ -166,20 +180,28 @@ def run_episode(max_steps, epsilon, render=False):
         old_state = new_state
 
         optimize_model()
-        soft_update() 
-        cumulative_reward+=reward
+        soft_update()
+        cumulative_reward += reward
 
     return cumulative_reward.item()
 
+
 if __name__ == "__main__":
     if "--train" in sys.argv:
-        for x in range(501):
+        if "--continue" in sys.argv:
+            policy_net.load_state_dict(torch.load("policy_net.torch"))
+            target_net.load_state_dict(torch.load("target_net.torch"))
+            EPSILON_START = 0.01
+            print("Loaded old model!")
+
+        for x in range(1, 501):
             epsilon = get_epsilon(x)
-            reward = run_episode(1000, epsilon)
+            reward = run_episode(1600, epsilon)
             print(f"Episode: {x}, Epsilon: {epsilon}, Reward: {reward}")
             if x % 20 == 0:
-                torch.save(target_net.state_dict(), "model.torch")
+                torch.save(target_net.state_dict(), "target_net.torch")
+                torch.save(policy_net.state_dict(), "policy_net.torch")
     else:
-        policy_net.load_state_dict(torch.load("model.torch"))
-        target_net.load_state_dict(policy_net.state_dict())
+        policy_net.load_state_dict(torch.load("policy_net.torch"))
+        target_net.load_state_dict(torch.load("target_net.torch"))
         run_episode(10000, 0, True)
