@@ -1,6 +1,7 @@
 import math
 import numpy as np
 import cv2
+import matplotlib.pyplot as plt
 
 IMAGE_WIDTH = 96
 IMAGE_HEIGHT = 96
@@ -260,8 +261,8 @@ def extract_angle_to_street_com(image):
 # Extracts closest point to a collectible.
 def extract_closest_point_to_collectible(image):
     height , width, _ = image.shape
-    lower_gray = np.array([100, 100, 100])
-    upper_gray = np.array([101, 101, 101])
+    lower_gray = np.array([103, 103, 103])
+    upper_gray = np.array([255, 255, 255])
 
     mask = cv2.inRange(image, lower_gray, upper_gray)
 
