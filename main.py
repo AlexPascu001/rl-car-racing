@@ -61,6 +61,7 @@ while True:
         raycast(gameplay, -np.pi/2)
         ]
     extracted_angle_to_com = feature_extraction.extract_angle_to_street_com(gameplay)
+    extracted_angle_to_closest_point = feature_extraction.extract_angle_to_closest_point(gameplay)
 
     true_speed = np.sqrt(
         np.square(env.car.hull.linearVelocity[0])

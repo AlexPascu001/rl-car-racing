@@ -1,6 +1,7 @@
 import math
 import numpy as np
 import cv2
+import matplotlib.pyplot as plt
 
 IMAGE_WIDTH = 96
 IMAGE_HEIGHT = 96
@@ -256,3 +257,50 @@ def extract_angle_to_street_com(image):
     # Draw ray to COM for debugging.
     draw_ray(image, angle)
     return angle 
+
+# Extracts closest point to a collectible.
+def extract_closest_point_to_collectible(image):
+    height , width, _ = image.shape
+    lower_gray = np.array([103, 103, 103])
+    upper_gray = np.array([255, 255, 255])
+
+    mask = cv2.inRange(image, lower_gray, upper_gray)
+
+    car_center_y = int(3/4*IMAGE_HEIGHT)
+    car_center_x = int(1/2*IMAGE_HEIGHT)
+
+    min_dist = 100000
+    min_x = 0
+    min_y = 0
+    # the collectible should be "above" the car
+    for y in range(car_center_y):
+        for x in range(width):
+            if mask[y,x]:
+                dist = (x-car_center_x)**2 + (y-car_center_y)**2
+                if dist < min_dist:
+                    min_dist = dist
+                    min_x = x
+                    min_y = y
+
+    # Draw closest point for debugging.
+    image[min_y-1:min_y+2, min_x-1:min_x+2] = [0,0,0]
+    return (min_x, min_y)
+
+# Extracts the angle in radians to the closest point to a collectible.
+def extract_angle_to_closest_point(image):
+    closest_point = extract_closest_point_to_collectible(image)
+    closest_point_x, closest_point_y = closest_point
+
+    car_center_y = int(3/4*IMAGE_HEIGHT)
+    car_center_x = int(1/2*IMAGE_HEIGHT)
+
+    diff_x = closest_point_x - car_center_x
+    diff_y = car_center_y - closest_point_y
+
+    vector = diff_y + 1j*diff_x
+
+    angle = np.angle(vector)
+
+    # Draw ray to closest point for debugging.
+    draw_ray(image, angle)
+    return angle
